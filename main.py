@@ -1,6 +1,8 @@
 from flask import Flask, request, render_template, jsonify
 import requests
 import pickle
+import random
+
 
 with open('model.pkl', 'rb') as f:
     model = pickle.load(f)
@@ -10,6 +12,7 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/get_weather', methods=['POST'])
 def get_weather():
@@ -36,16 +39,16 @@ def get_weather():
         temp = data['main']['temp']
         feelslike = data['main']['feels_like']
         windspeed = data['wind']['speed']
-        sealevelpressure = data['main']['sea_level']
+        pressure = data['main']['pressure']
 
-        # Check if 'sea_level' is available in the API response
-        if 'sea_level' in data['main']:
-            sealevelpressure = data['main']['sea_level']
-        else:
-            sealevelpressure = 'Not available'  
+        
+        precipprob = 100
+        precipcover = random.uniform(5, 12)  # Assign a random value between 5 and 12
+        cloudcover = random.uniform(0, 100)  # Assign a random value between 0 and 100
 
         # Use the trained model to make a prediction
-        prediction = model.predict([[ tempmax, tempmin, temp,feelslike,humidity,windspeed,sealevelpressure]])[0]
+        prediction = model.predict([[tempmax, tempmin, temp, feelslike, humidity, windspeed, pressure,
+                             precipprob, precipcover, cloudcover]])[0]
 
         # Map the prediction to the corresponding weather type
         weather_types = {0: 'Clear', 1: 'Overcast', 2: 'Partially cloudy', 3: 'Rain', 4: 'Rain, Overcast',5 :'Rain, Partially cloudy',6 :'Snow, Rain, Overcast',7 :'Snow, Rain, Partially cloudy'}
@@ -62,4 +65,4 @@ def get_weather():
         return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True) #automatic reloading server when changes are done 

@@ -2,55 +2,39 @@
 <html lang="en">
 
 <head>
-  <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
-  <title>Hello, world!</title>
+  <title>Weather Prediction System</title>
 </head>
 
 <body>
 
-
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-    crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
-    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-    crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
-    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-    crossorigin="anonymous"></script>
-
-  <div class="loginbackground-gridContainer">
-    
-    <h2 style="color: #060607; font-weight: 700; text-align: center; margin-top: 50px;">Weather Prediction System</h2>
-    <form id="submitForm" style="font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">
-     
-      <div class="col-auto">
-        <input class="form-control" type="text" placeholder="City" id="city" name="city">
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">Weather Prediction System</h2>
+    <form id="submitForm">
+      <div class="form-group">
+        <label for="city">Enter city name for weather prediction:</label>
+        <input type="text" class="form-control" id="city" name="city" placeholder="E.g., Stockholm">
       </div>
-      
-      <div class="col-auto">
-        <button style="margin-top: 20px;" type="button" class="btn btn-primary mb-3" onclick="getWeather()">Get Weather</button>
-      </div>
+      <button type="button" class="btn btn-primary" onclick="getWeather()">Predict Weather</button>
     </form>
+
+    <div class="result-container mt-4" id="result-container"></div>
   </div>
-  
+
+
+
   <script>
     function getWeather() {
       var city = document.getElementById('city').value;
-  
+
       if (!city) {
         alert('Please enter a city before submitting.');
         return;
       }
-  
-      // Make an asynchronous request to Flask app to get weather data
+
       fetch('/get_weather', {
         method: 'POST',
         headers: {
@@ -60,96 +44,87 @@
           'city': city,
         }),
       })
-      .then(response => response.json())
-      .then(data => {
-        console.log('API Response:', data);
-        if (data.error) {
-      // Handle API error and show notification
-      alert(`Error: ${data.error}\n${data.notification}`);
-    } else {
-      // Display weather data
-      displayWeather(data);
+        .then(response => response.json())
+        .then(data => {
+          console.log('API Response:', data);
+          if (data.error) {
+            alert(`Error: ${data.error}\n${data.notification}`);
+          } else {
+            displayWeather(data);
+          }
+        })
+        .catch(error => {
+          console.error('Error making API request:', error);
+          alert('An error occurred. Please try again.');
+        });
     }
-      })
-      .catch(error => {
-        console.error('Error making API request:', error);
-        alert('An error occurred. Please try again.');
-      });
-    }
-  
+
     function displayWeather(data) {
       var resultContainer = document.getElementById('result-container');
-  
+
       if (data.error) {
-        // Handle API error
-        resultContainer.innerHTML = `<p>Error: ${data.error}</p>`;
+        resultContainer.innerHTML = `<p class="text-danger">${data.error}</p>`;
         return;
       }
-  
+
       if (data.weather_data.main && data.weather_data.wind) {
-      var humidity = data.weather_data.main.humidity/10;
-      var tempmax = data.weather_data.main.temp_max;
-      var tempmin = data.weather_data.main.temp_min;
-      var temp = data.weather_data.main.temp;
-      var feelslike = data.weather_data.main.feels_like;
-      var windspeed = data.weather_data.wind.speed;
-      var sealevelpressure = data.weather_data.main.sea_level;
+        var humidity = data.weather_data.main.humidity;
+        var tempmax = data.weather_data.main.temp_max;
+        var tempmin = data.weather_data.main.temp_min;
+        var temp = data.weather_data.main.temp;
+        var feelslike = data.weather_data.main.feels_like;
+        var windspeed = data.weather_data.wind.speed;
+        var pressure = data.weather_data.main.pressure;
+        var predictedWeather = data.predicted_weather;
 
-      // Check if 'sea_level' is not available
-    if (sealevelpressure === undefined) {
-      sealevelpressure = 'Not available';
-    }
-
-      var predictedWeather = data.predicted_weather;
-
-      resultContainer.innerHTML = `
-      <table class="table table-bordered">
-        <tbody>
-          <tr>
-            <th scope="row">Humidity</th>
-            <td>${humidity}%</td>
-          </tr>
-          <tr>
-            <th scope="row">Max Temperature</th>
-            <td>${tempmax} °C</td>
-          </tr>
-          <tr>
-            <th scope="row">Min Temperature</th>
-            <td>${tempmin} °C</td>
-          </tr>
-          <tr>
-            <th scope="row">Current Temperature</th>
-            <td>${temp} °C</td>
-          </tr>
-          <tr>
-            <th scope="row">Feels Like</th>
-            <td>${feelslike} °C</td>
-          </tr>
-          <tr>
-            <th scope="row">Wind Speed</th>
-            <td>${windspeed} m/s</td>
-          </tr>
-          <tr>
-            <th scope="row">Sea Level Pressure</th>
-            <td>${sealevelpressure} m/s</td>
-          </tr>
-          <tr>
-            <th scope style="color: red;"="row">Predicted Weather</th>
-            <td style="color: red;">${predictedWeather}</td>
-          </tr>
-        </tbody>
-      </table>
-      `;
-    } else {
-      resultContainer.innerHTML = '<p>No weather data available for the provided city.</p>';
-    }
+        resultContainer.innerHTML = `
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Weather Information</h5>
+            <table class="table">
+              <tbody>
+                <tr>
+                  <th scope="row">Humidity</th>
+                  <td>${humidity}%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Max Temperature</th>
+                  <td>${tempmax} °C</td>
+                </tr>
+                <tr>
+                  <th scope="row">Min Temperature</th>
+                  <td>${tempmin} °C</td>
+                </tr>
+                <tr>
+                  <th scope="row">Current Temperature</th>
+                  <td>${temp} °C</td>
+                </tr>
+                <tr>
+                  <th scope="row">Feels Like</th>
+                  <td>${feelslike} °C</td>
+                </tr>
+                <tr>
+                  <th scope="row">Wind Speed</th>
+                  <td>${windspeed} m/s</td>
+                </tr>
+                <tr>
+                  <th scope="row">Pressure</th>
+                  <td>${pressure} p</td>
+                </tr>
+                <tr>
+                  <th scope="row" style="color: red;">Predicted Weather</th>
+                  <td style="color: red;">${predictedWeather}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        `;
+      } else {
+        resultContainer.innerHTML = '<p class="text-warning">No weather data available for the provided city.</p>';
+      }
     }
   </script>
-  
-  <div class="result-container" id="result-container"></div>
-
-  
-
 
 </body>
 
